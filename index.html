@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>BornStory — Your Birth Date. Your Story.</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--g:#d9ad55;--g2:#f7df9b;--bg:#050505;--card:#0d0d0d;--line:rgba(217,173,85,.24);--muted:#999;--text:#faf7ef}
+*{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
+body{font-family:Inter,system-ui,Arial,sans-serif;background:radial-gradient(circle at 50% -10%,rgba(217,173,85,.18),transparent 35%),#050505;color:var(--text);min-height:100vh}
+a{color:inherit;text-decoration:none}button,input,select,textarea{font:inherit}
+canvas{position:fixed;inset:0;z-index:-1;pointer-events:none}
+.container{width:min(1120px,92%);margin:auto}
+header{position:sticky;top:0;z-index:50;background:rgba(5,5,5,.82);backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}
+.nav{height:70px;display:flex;align-items:center;gap:15px}.logo{font-size:24px;font-weight:900}.logo span{color:var(--g)}
+.navlinks{display:flex;gap:22px;color:#bbb;font-size:14px}.navlinks a:hover{color:var(--g2)}
+.nav-actions{display:flex;gap:8px;align-items:center;margin-left:auto}.btn{border:1px solid var(--line);background:#111;color:#fff;border-radius:11px;padding:11px 16px;font-weight:800;cursor:pointer}.btn:hover{border-color:var(--g2);transform:translateY(-1px)}.gold{background:linear-gradient(135deg,var(--g2),var(--g));color:#090909;border:0}.small{padding:8px 11px;font-size:12px}
+.user-chip{display:none;align-items:center;gap:7px;border:1px solid var(--line);background:#111;border-radius:11px;padding:5px 10px 5px 5px;cursor:pointer}.user-chip:hover{border-color:var(--g2)}.avatar{width:29px;height:29px;border-radius:50%;display:grid;place-items:center;background:var(--g2);color:#111;font-weight:900}
+.hero{text-align:center;padding:88px 0 60px}.badge{display:inline-block;border:1px solid var(--line);color:var(--g2);border-radius:99px;padding:7px 12px;font-size:11px;font-weight:900}
+h1{font-size:clamp(44px,8vw,78px);line-height:.98;letter-spacing:-4px;margin:20px 0}h1 span{color:var(--g2)}.hero>div>p{max-width:650px;margin:auto;color:#999;line-height:1.7}
+.form-card,.card,.story-main,.moon,.admin-wrap{border:1px solid var(--line);background:linear-gradient(145deg,#111,#080808);border-radius:20px}
+.form-card{max-width:850px;margin:32px auto 0;padding:18px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+input,select,textarea{width:100%;padding:13px;border-radius:10px;border:1px solid #292929;background:#070707;color:#fff;outline:none}textarea{min-height:90px;resize:vertical}input:focus,select:focus,textarea:focus{border-color:var(--g)}
+.form-card .btn{width:100%;margin-top:10px}
+section{padding:65px 0}.title{text-align:center;margin-bottom:30px}.title h2{font-size:36px}.title p{color:#888;margin-top:7px}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card{padding:22px}.icon{font-size:26px;margin-bottom:12px}.card h3{margin-bottom:7px}.card p{color:#999;line-height:1.55;font-size:14px}
+.story{display:grid;grid-template-columns:1.15fr .85fr;gap:15px}.story-main,.moon{padding:26px}.story-main h3{font-size:24px;margin-bottom:10px}.story-main p{color:#aaa;line-height:1.8}.pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}.pill{border:1px solid var(--line);padding:7px 10px;border-radius:99px;color:var(--g2);font-size:11px}
+.moon{text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center}.moonball{width:130px;height:130px;border-radius:50%;margin:12px;background:radial-gradient(circle at 30% 30%,#fff8d7,#c5ad68 52%,#4b4025);box-shadow:0 0 55px rgba(246,217,139,.18)}
+.pricing{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}.price{font-size:40px;font-weight:900;margin:13px 0}.price small{font-size:11px;color:#777}.card ul{list-style:none;color:#aaa;line-height:2;margin:14px 0}.card li:before{content:"✓";color:var(--g2);margin-right:7px}.popular{font-size:9px;color:#111;background:var(--g);padding:5px 8px;border-radius:99px;font-weight:900;display:inline-block}
+.account{display:none;max-width:850px;margin:0 auto 25px;padding:16px 18px;border:1px solid var(--line);border-radius:17px;background:#0d0d0d}.account.show{display:flex;justify-content:space-between;gap:15px;align-items:center}.account small{display:block;color:#777;margin-top:4px}
+#adminSection{display:none}.admin-wrap{padding:22px}.admin-top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}.admin-top p{color:#888;font-size:13px}.ticket{border:1px solid #272727;border-radius:15px;padding:16px;margin-bottom:10px;background:#090909}.ticket-head{display:flex;justify-content:space-between;gap:10px}.status{font-size:10px;border-radius:99px;padding:5px 8px;background:#201a0d;color:var(--g2);height:max-content}.ticket-meta{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin:12px 0;color:#aaa;font-size:12px}.ticket-meta b{color:#eee}.actions{display:flex;gap:7px;flex-wrap:wrap}.danger{border-color:#633535}.empty{color:#777;text-align:center;padding:30px}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);backdrop-filter:blur(9px);z-index:100;align-items:center;justify-content:center;padding:15px}.modal.show{display:flex}.modal-box{width:min(470px,100%);background:#0c0c0c;border:1px solid var(--line);border-radius:20px;padding:24px}.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}.close{border:0;background:none;color:#aaa;font-size:24px;cursor:pointer}.tabs{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:4px;background:#050505;border-radius:10px;margin-bottom:15px}.tab{border:0;background:none;color:#888;padding:10px;border-radius:8px;cursor:pointer;font-weight:800}.tab.active{background:#1b150c;color:var(--g2)}.auth{display:grid;gap:9px}.note{color:#777;font-size:11px;line-height:1.5;margin-top:10px}.toast{position:fixed;right:16px;bottom:16px;background:#111;border:1px solid var(--line);border-radius:11px;padding:12px 15px;display:none;z-index:200}.toast.show{display:block}
+footer{border-top:1px solid var(--line);padding:35px 0;text-align:center;color:#666;font-size:12px}
+@media(max-width:850px){.navlinks{display:none}.cards{grid-template-columns:1fr 1fr}.story{grid-template-columns:1fr}.pricing{grid-template-columns:1fr}.ticket-meta{grid-template-columns:1fr}}
+@media(max-width:600px){.grid{grid-template-columns:1fr}.hero{padding-top:65px}h1{letter-spacing:-2px}.account{align-items:flex-start;flex-direction:column}}
+
+/* ULTIMATE PREMIUM THEME */
+body.ultimate-premium{
+  --g:#f0a8ff;
+  --g2:#ffd6ff;
+  --bg:#09040f;
+  --card:#160b20;
+  --line:rgba(240,168,255,.28);
+  --muted:#bca6c5;
+  --text:#fff8ff;
+  background:
+    radial-gradient(circle at 15% 10%,rgba(180,55,255,.24),transparent 30%),
+    radial-gradient(circle at 85% 20%,rgba(255,65,190,.22),transparent 28%),
+    radial-gradient(circle at 50% 100%,rgba(120,30,220,.20),transparent 35%),
+    #09040f;
+}
+body.ultimate-premium header{
+  background:rgba(9,4,15,.76);
+  border-bottom-color:rgba(255,145,235,.32);
+  box-shadow:0 8px 35px rgba(190,50,255,.10);
+}
+body.ultimate-premium .form-card,
+body.ultimate-premium .card,
+body.ultimate-premium .story-main,
+body.ultimate-premium .moon,
+body.ultimate-premium .admin-wrap{
+  background:linear-gradient(145deg,rgba(32,14,45,.92),rgba(13,6,21,.94));
+  border-color:rgba(240,168,255,.28);
+  box-shadow:0 14px 45px rgba(145,35,210,.10);
+}
+body.ultimate-premium .btn.gold{
+  background:linear-gradient(135deg,#ffd6ff,#f0a8ff 45%,#c65cff);
+  box-shadow:0 0 22px rgba(240,110,255,.22);
+}
+body.ultimate-premium h1 span,
+body.ultimate-premium .logo span,
+body.ultimate-premium .pill,
+body.ultimate-premium .popular{
+  color:#ffd6ff;
+}
+body.ultimate-premium .moonball{
+  background:radial-gradient(circle at 30% 30%,#fff7ff,#efb5ff 48%,#8f32c4);
+  box-shadow:0 0 70px rgba(235,105,255,.30);
+}
+body.ultimate-premium .badge{
+  box-shadow:0 0 25px rgba(230,80,255,.12);
+}
+body.ultimate-premium .ticket{
+  border-color:rgba(240,168,255,.20);
+  background:rgba(16,7,24,.72);
+}
+</style>
+<meta name="bornstory-build" content="FINAL-admin-ticket-rls-fix">
+</head>
+<body>
+<canvas id="stars"></canvas>
+
+<header><div class="container nav">
+<a class="logo" href="#">Born<span>Story</span></a>
+<nav class="navlinks"><a href="#features">Features</a><a href="#story">Story</a><a href="#plans">Plans</a><a href="#about">About</a></nav>
+<div class="nav-actions">
+<button class="user-chip" id="userChip" type="button" onclick="openAccountMenu()"><div class="avatar" id="avatar">B</div><span id="navName"></span></button>
+<button class="btn small" id="authBtn" onclick="openAuth()">Login / Sign Up</button>
+<button class="btn small" id="adminBtn" style="display:none" onclick="showAdmin()">👑 Admin Panel</button>
+<button class="btn small" id="logoutBtn" style="display:none" onclick="logout()">Logout</button>
+</div>
+</div></header>
+
+<section class="hero"><div class="container">
+<div class="badge">✦ PREMIUM BIRTH STORY EXPERIENCE</div>
+<h1>Your Birth Date.<br><span>Your Story.</span></h1>
+<p>Enter your birth details and discover a beautiful story around your date, place, moon and the world around you.</p>
+<div class="account" id="accountBox"><div><b id="welcome"></b><small id="accountStatus">Free account</small><small id="userIdLine"></small></div><button class="btn small gold" onclick="document.getElementById('plans').scrollIntoView({behavior:'smooth'})">View Plans</button></div>
+<div class="form-card"><div class="grid"><input id="dob" type="date"><input id="city" placeholder="Birth city"><input id="country" placeholder="Country"></div><button class="btn gold" onclick="generateStory()">Generate My Birth Story ✦</button></div>
+</div></section>
+
+<section id="features"><div class="container"><div class="title"><h2>Built Around Your Birth</h2><p>A premium experience designed to turn a date into a story.</p></div><div class="cards">
+<div class="card"><div class="icon">🌎</div><h3>Historical Events</h3><p>Explore selected events connected to your birth date.</p></div>
+<div class="card"><div class="icon">🌙</div><h3>Moon & Astronomy</h3><p>See an approximate lunar phase for your birth date.</p></div>
+<div class="card"><div class="icon">🎵</div><h3>Music</h3><p>Premium plans can unlock a richer music-era experience.</p></div>
+<div class="card"><div class="icon">✨</div><h3>Personal Timeline</h3><p>Turn your birth details into a unique timeline.</p></div>
+</div></div></section>
+
+<section id="story"><div class="container"><div class="title"><h2>Your Story Preview</h2><p>Generate your personalized preview above.</p></div><div class="story">
+<div class="story-main"><h3 id="storyTitle">Your story is waiting ✦</h3><p id="storyText">Enter your details above and generate your birth story.</p><div class="pills" id="storyMeta"></div></div>
+<div class="moon"><div>MOON PHASE</div><div class="moonball"></div><b id="moonName">—</b><small id="moonInfo" style="color:#777">Enter a date to calculate</small></div>
+</div></div></section>
+
+<section id="plans"><div class="container"><div class="title"><h2>Choose Your Experience</h2><p>One-time plans. Purchase requests are reviewed by the owner. Ultimate unlocks the exclusive Purple + Pink premium theme.</p></div><div class="pricing">
+<div class="card"><h3>Free</h3><div class="price">₹0 <small>/ forever</small></div><ul><li>Birth date & city</li><li>Basic story preview</li><li>Moon phase</li><li>Selected events</li></ul><button class="btn">Current Free Plan</button></div>
+<div class="card"><span class="popular">POPULAR</span><h3 style="margin-top:10px">Pro</h3><div class="price">₹99 <small>/ one time</small></div><ul><li>Personalized birth story</li><li>Music experience</li><li>More events</li><li>Premium themes</li><li>HD story card</li></ul><button class="btn gold" onclick="buyPlan('PRO',99)">Buy Pro — ₹99</button></div>
+<div class="card"><h3>Ultimate</h3><div class="price">₹199 <small>/ one time</small></div><ul><li>Everything in Pro</li><li>Exclusive themes</li><li>Extended timeline</li><li>Detailed astronomy</li><li>Special animations</li><li>Exclusive Purple + Pink premium website theme</li><li>Premium share card</li></ul><button class="btn gold" onclick="buyPlan('ULTIMATE',199)">Buy Ultimate — ₹199</button></div>
+</div></div></section>
+
+<section id="adminSection"><div class="container"><div class="title"><h2>👑 Admin Panel</h2><p>Private owner dashboard — purchase requests and plan activation.</p></div><div class="admin-wrap">
+<div class="admin-top"><div><b>Purchase Tickets</b><p>Approve only after verifying payment.</p></div><button class="btn small" onclick="loadTickets()">↻ Refresh</button></div>
+<div id="tickets"><div class="empty">Loading tickets…</div></div>
+</div></div></section>
+
+<section id="about"><div class="container"><div class="title"><h2>About BornStory</h2><p>Your birth date. Your place. Your story.</p></div><div class="card" style="text-align:center;max-width:800px;margin:auto"><p style="color:#aaa;line-height:1.8">BornStory creates a personalized birth-date experience. Accounts, purchase tickets and plan status are designed to be stored securely through Supabase.</p><p style="margin-top:12px;color:#777">Purchase support: <b style="color:var(--g2)">invizibleplayz</b> on Discord.</p></div></div></section>
+<footer>© 2026 <b style="color:var(--g2)">BornStory</b> — Premium Birth Story Experience</footer>
+
+<!-- AUTH -->
+<div class="modal" id="authModal"><div class="modal-box"><div class="modal-head"><h2 id="authTitle">Welcome Back</h2><button class="close" onclick="closeModal('authModal')">×</button></div>
+<div class="tabs"><button id="loginTab" class="tab active" onclick="switchAuth('login')">Login</button><button id="signupTab" class="tab" onclick="switchAuth('signup')">Sign Up</button></div>
+<form id="loginForm" class="auth" onsubmit="login(event)"><input id="loginEmail" type="email" placeholder="Email address" required><input id="loginPassword" type="password" placeholder="Password" required><button class="btn gold">Login</button><div class="note">Secure mode uses Supabase Auth. Your password is not stored by this page.</div></form>
+<form id="signupForm" class="auth" onsubmit="signup(event)" style="display:none"><input id="signupName" placeholder="Your name" required><input id="signupEmail" type="email" placeholder="Email address" required><input id="signupPassword" type="password" minlength="6" placeholder="Password (6+ characters)" required><input id="signupConfirm" type="password" minlength="6" placeholder="Confirm password" required><button class="btn gold">Create Account</button><div class="note">A verification email may be required depending on your Supabase Auth settings.</div></form>
+</div></div>
+
+<!-- ACCOUNT PANEL -->
+<div class="modal" id="accountModal"><div class="modal-box">
+<div class="modal-head"><h2>My Account</h2><button class="close" onclick="closeModal('accountModal')">×</button></div>
+<div class="card" style="padding:16px;margin-bottom:12px"><b id="panelAccountName">Account</b><p id="panelAccountEmail" style="color:#999;margin-top:6px;font-size:13px"></p><p id="panelAccountPlan" style="color:var(--g2);margin-top:6px;font-size:12px;font-weight:800"></p></div>
+<button class="btn small" style="width:100%" onclick="closeModal('accountModal')">Close</button>
+</div></div>
+
+<!-- PURCHASE TICKET -->
+<div class="modal" id="ticketModal"><div class="modal-box"><div class="modal-head"><h2 id="ticketTitle">Create Ticket</h2><button class="close" onclick="closeModal('ticketModal')">×</button></div>
+<div class="note" style="margin-bottom:12px">Submit your Discord details. Your ticket will appear in the private Admin Panel for verification.</div>
+<form class="auth" onsubmit="submitTicket(event)">
+<input id="ticketName" placeholder="Name" required><input id="ticketEmail" type="email" placeholder="Account Gmail" required readonly>
+<input id="ticketPlan" readonly><input id="ticketDiscord" placeholder="Discord ID (e.g. username)" required autocomplete="off">
+<textarea id="ticketMessage" placeholder="Additional details (optional)"></textarea>
+<button class="btn gold">Submit Purchase Ticket</button>
+</form></div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= SUPABASE CONFIG =================
+   Replace only these two values with your project's client-side
+   Project URL and PUBLISHABLE/anon key.
+   NEVER put a service_role/secret key in this HTML.
+*/
+const SUPABASE_URL="https://qlexrbathguyqyovbbhf.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY="sb_publishable_2N71kOoLiYdxEo8hCAVXLw__XIeloBf";
+const configured=SUPABASE_URL.startsWith("https://")&&!SUPABASE_URL.includes("YOUR_")&&!SUPABASE_PUBLISHABLE_KEY.includes("YOUR_");
+const sb=configured&&window.supabase?window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}):null;
+
+let sessionUser=null, selectedPlan=null;
+const ADMIN_EMAIL="krrishsoni2308@gmail.com";
+function isAdminUser(user=sessionUser, profileRole=""){
+ return !!user && (profileRole==="admin" || (user.email||"").trim().toLowerCase()===ADMIN_EMAIL);
+}
+function openAccountMenu(){
+ if(!sessionUser){openAuth();return}
+ document.getElementById("accountModal").classList.add("show");
+}
+
+/* Stars */
+const c=document.getElementById("stars"),x=c.getContext("2d");let stars=[];
+function resize(){c.width=innerWidth;c.height=innerHeight;stars=Array.from({length:Math.min(150,Math.floor(innerWidth/8))},()=>({x:Math.random()*c.width,y:Math.random()*c.height,r:Math.random()*1.3+.2,s:Math.random()*.25+.05}))}
+function anim(){x.clearRect(0,0,c.width,c.height);x.fillStyle="rgba(255,235,180,.7)";stars.forEach(s=>{s.y-=s.s;if(s.y<0)s.y=c.height;x.globalAlpha=.3+Math.random()*.5;x.beginPath();x.arc(s.x,s.y,s.r,0,Math.PI*2);x.fill()});requestAnimationFrame(anim)}addEventListener("resize",resize);resize();anim();
+
+function toast(m){let t=document.getElementById("toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2800)}
+function closeModal(id){document.getElementById(id).classList.remove("show")}
+function openAuth(){document.getElementById("authModal").classList.add("show");switchAuth("login")}
+function switchAuth(mode){let l=mode==="login";document.getElementById("loginForm").style.display=l?"grid":"none";document.getElementById("signupForm").style.display=l?"none":"grid";document.getElementById("loginTab").classList.toggle("active",l);document.getElementById("signupTab").classList.toggle("active",!l);document.getElementById("authTitle").textContent=l?"Welcome Back":"Create Your Account"}
+
+async function signup(e){
+ e.preventDefault(); if(!sb){toast("Supabase is not configured. Add your project credentials first.");return}
+ const name=document.getElementById("signupName").value.trim(),email=document.getElementById("signupEmail").value.trim().toLowerCase(),p=document.getElementById("signupPassword").value,cp=document.getElementById("signupConfirm").value;
+ if(p!==cp){toast("Passwords do not match.");return}
+ const {data,error}=await sb.auth.signUp({email,password:p,options:{data:{full_name:name}}});
+ if(error){toast(error.message);return}
+ if(data.session){closeModal("authModal");await loadUser();toast("Secure account created.")}
+ else {closeModal("authModal");toast("Account created. Check your email to verify it.")}
+}
+async function login(e){
+ e.preventDefault();if(!sb){toast("Supabase is not configured yet.");return}
+ const email=document.getElementById("loginEmail").value.trim().toLowerCase(),p=document.getElementById("loginPassword").value;
+ const {data,error}=await sb.auth.signInWithPassword({email,password:p});
+ if(error){toast(error.message);return}closeModal("authModal");await loadUser();toast("Login successful.")}
+async function logout(){if(sb)await sb.auth.signOut();sessionUser=null;applyPremiumTheme("FREE");updateUI();document.getElementById("adminSection").style.display="none";document.getElementById("adminBtn").style.display="none";toast("Logged out.")}
+
+async function loadUser(){
+ if(!sb){updateUI();return}
+ const {data,error}=await sb.auth.getUser();if(error||!data.user){sessionUser=null;updateUI();return}
+ sessionUser=data.user;updateUI();await loadProfile();
+}
+async function loadProfile(){
+ if(!sb||!sessionUser)return;
+ const {data}=await sb.from("profiles").select("full_name,plan,role").eq("id",sessionUser.id).maybeSingle();
+ const name=data?.full_name||sessionUser.user_metadata?.full_name||sessionUser.email.split("@")[0];
+ const admin=isAdminUser(sessionUser,data?.role||"");
+ document.getElementById("navName").textContent=name;document.getElementById("avatar").textContent=name[0].toUpperCase();
+ document.getElementById("welcome").textContent="Welcome, "+name;
+ document.getElementById("userIdLine").textContent="Secure User ID: "+sessionUser.id;
+ document.getElementById("accountStatus").textContent=(data?.plan||"FREE")+" plan";applyPremiumTheme(data?.plan||"FREE");
+ document.getElementById("panelAccountName").textContent=name;
+ document.getElementById("panelAccountEmail").textContent=sessionUser.email||"";
+ document.getElementById("panelAccountPlan").textContent=(data?.plan||"FREE")+" plan"+(admin?" • ADMIN":"");
+ document.getElementById("adminBtn").style.display=admin?"inline-block":"none";
+}
+function applyPremiumTheme(plan){
+ const premium=String(plan||"FREE").toUpperCase()==="ULTIMATE";
+ document.body.classList.toggle("ultimate-premium",premium);
+}
+function updateUI(){
+ const on=!!sessionUser;document.getElementById("authBtn").style.display=on?"none":"inline-block";document.getElementById("logoutBtn").style.display=on?"inline-block":"none";document.getElementById("userChip").style.display=on?"flex":"none";document.getElementById("accountBox").classList.toggle("show",on);
+}
+if(sb){sb.auth.onAuthStateChange(()=>setTimeout(loadUser,0));loadUser()}else updateUI();
+
+/* Story */
+function moonPhase(date){const known=new Date(Date.UTC(2000,0,6,18,14)),d=new Date(date+"T00:00:00Z"),cycle=29.53058867,phase=((((d-known)/86400000)%cycle)+cycle)%cycle,n=["New Moon","Waxing Crescent","First Quarter","Waxing Gibbous","Full Moon","Waning Gibbous","Last Quarter","Waning Crescent"],i=Math.floor(phase/cycle*8)%8;return{name:n[i],phase}}
+function generateStory(){const dob=document.getElementById("dob").value,city=document.getElementById("city").value.trim(),country=document.getElementById("country").value.trim();if(!dob||!city||!country){toast("Enter birth date, city and country.");return}const d=new Date(dob+"T00:00:00"),text=d.toLocaleDateString(undefined,{day:"numeric",month:"long",year:"numeric"}),m=moonPhase(dob);document.getElementById("storyTitle").textContent="A story began on "+text;document.getElementById("storyText").textContent=`You were born in ${city}, ${country}. Your BornStory journey starts with the world around that date, the lunar sky above it and moments that made the day unique.`;document.getElementById("storyMeta").innerHTML=`<span class="pill">📍 ${esc(city)}, ${esc(country)}</span><span class="pill">📅 ${text}</span><span class="pill">🌙 ${m.name}</span>`;document.getElementById("moonName").textContent=m.name;document.getElementById("moonInfo").textContent="Approximate lunar phase";document.getElementById("story").scrollIntoView({behavior:"smooth"})}
+function esc(s){return s.replace(/[&<>"']/g,a=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[a]))}
+
+/* Purchase tickets */
+async function buyPlan(plan,price){
+ if(!sessionUser){toast("Please login or sign up before purchasing.");openAuth();return}
+ if(!sb){toast("Connect Supabase before creating purchase tickets.");return}
+ selectedPlan=plan;document.getElementById("ticketTitle").textContent=`Create ${plan} Purchase Ticket`;document.getElementById("ticketName").value=sessionUser.user_metadata?.full_name||"";document.getElementById("ticketEmail").value=sessionUser.email||"";document.getElementById("ticketPlan").value=`${plan} — ₹${price}`;document.getElementById("ticketDiscord").value="";document.getElementById("ticketMessage").value="";document.getElementById("ticketModal").classList.add("show")
+}
+async function submitTicket(e){
+ e.preventDefault();
+ if(!sb){toast("Supabase is not configured.");return}
+ if(!sessionUser){toast("Please login again.");return}
+
+ const plan=selectedPlan;
+ const discordId=document.getElementById("ticketDiscord").value.trim();
+ const message=document.getElementById("ticketMessage").value.trim();
+
+ if(!plan){toast("Please select Pro or Ultimate again.");return}
+ if(!discordId){toast("Enter your Discord ID.");return}
+
+ const {data:authData}=await sb.auth.getUser();
+ const user=authData?.user;
+ if(!user){sessionUser=null;updateUI();toast("Session expired. Please login again.");return}
+ sessionUser=user;
+
+ const ticket={
+   user_id:user.id,
+   plan:plan,
+   discord_id:discordId,
+   message:message||null,
+   status:"PENDING"
+ };
+
+ const {error}=await sb.from("purchase_tickets").insert(ticket);
+
+ if(error){
+   console.error("purchase_tickets insert:",error);
+   toast("Ticket create failed: "+(error.message||"Database error"));
+   return;
+ }
+
+ closeModal("ticketModal");
+ document.getElementById("ticketDiscord").value="";
+ document.getElementById("ticketMessage").value="";
+ toast("Ticket created successfully.");
+}
+
+/* Admin */
+async function showAdmin(){
+ if(!sb||!sessionUser){toast("Admin access requires secure login.");return}
+ const {data}=await sb.from("profiles").select("role").eq("id",sessionUser.id).maybeSingle();
+ if(!isAdminUser(sessionUser,data?.role||"")){toast("Access denied.");return}
+ document.getElementById("adminSection").style.display="block";document.getElementById("adminSection").scrollIntoView({behavior:"smooth"});await loadTickets()
+}
+async function loadTickets(){
+  const box=document.getElementById("tickets");
+  if(!box)return;
+  box.innerHTML='<div class="empty">Loading tickets…</div>';
+
+  if(!sb){
+    box.innerHTML='<div class="empty">Supabase is not configured.</div>';
+    return;
+  }
+
+  try{
+    const {data:authData,error:authError}=await sb.auth.getUser();
+    if(authError)throw authError;
+    sessionUser=authData?.user||null;
+
+    if(!sessionUser){
+      box.innerHTML='<div class="empty">Admin login required. Please log in again.</div>';
+      return;
+    }
+
+    /* Check the profile role when available, while retaining the existing
+       admin-email gate used by this page. */
+    const profileResult=await sb.from("profiles")
+      .select("role")
+      .eq("id",sessionUser.id)
+      .maybeSingle();
+
+    const profile=profileResult.data||null;
+    if(profileResult.error && !isAdminUser(sessionUser,""))throw profileResult.error;
+
+    if(!isAdminUser(sessionUser,profile?.role||"")){
+      box.innerHTML='<div class="empty">Access denied.</div>';
+      return;
+    }
+
+    /* Direct table query: avoids optional joins/relations breaking ticket loading. */
+    const result=await sb.from("purchase_tickets")
+      .select("id,user_id,plan,discord_id,message,status,created_at")
+      .order("created_at",{ascending:false});
+
+    if(result.error){
+      console.error("purchase_tickets select:",result.error);
+      box.innerHTML='<div class="empty"><b>Could not load tickets.</b><br>'+
+        esc(result.error.message||"Database error")+
+        '<br><small style="color:#666">If this says Row Level Security, add an admin SELECT policy for purchase_tickets (or use an admin-only RPC).</small></div>';
+      return;
+    }
+
+    const tickets=Array.isArray(result.data)?result.data:[];
+    if(!tickets.length){
+      box.innerHTML='<div class="empty">No purchase tickets yet.</div>';
+      return;
+    }
+
+    box.innerHTML=tickets.map(t=>{
+      const id=String(t.id??"");
+      const shortId=id.length>8?id.slice(0,8):id;
+      const created=t.created_at?new Date(t.created_at).toLocaleString():"—";
+      const status=String(t.status||"PENDING").toUpperCase();
+      const plan=String(t.plan||"");
+      const userId=String(t.user_id||"");
+
+      return `<div class="ticket">
+        <div class="ticket-head">
+          <b>🎫 Ticket #${esc(shortId)}</b>
+          <span class="status">${esc(status)}</span>
+        </div>
+        <div class="ticket-meta">
+          <span>User ID<br><b>${esc(userId)}</b></span>
+          <span>Plan<br><b>${esc(plan)}</b></span>
+          <span>Discord ID<br><b>${esc(t.discord_id||"—")}</b></span>
+          <span>Created<br><b>${esc(created)}</b></span>
+        </div>
+        <div style="color:#999;font-size:12px;margin-bottom:12px">${esc(t.message||"No additional message.")}</div>
+        <div class="actions">
+          ${status==="PENDING"
+            ? `<button class="btn small gold" onclick="approveTicket(${JSON.stringify(id)},${JSON.stringify(userId)},${JSON.stringify(plan)})">✓ Approve & Activate</button>
+               <button class="btn small danger" onclick="rejectTicket(${JSON.stringify(id)})">Reject</button>`
+            : ""}
+        </div>
+      </div>`;
+    }).join("");
+
+  }catch(err){
+    console.error("loadTickets:",err);
+    box.innerHTML='<div class="empty"><b>Unable to load tickets.</b><br>'+
+      esc(err?.message||"Unexpected error while loading the admin ticket panel.")+
+      '</div>';
+  }
+}
+
+async function approveTicket(ticketId,userId,plan){
+ if(!confirm("Approve this payment and activate "+plan+"?"))return;
+ const {data,error}=await sb.rpc("approve_purchase_ticket",{p_ticket_id:ticketId,p_user_id:userId,p_plan:plan});
+ if(error){toast(error.message);return}toast("Approved. User plan activated.");loadTickets()
+}
+async function rejectTicket(ticketId){
+  if(!confirm("Reject this purchase ticket?")) return;
+
+  const { error } = await sb
+    .from("purchase_tickets")
+    .delete()
+    .eq("id", ticketId);
+
+  if(error){
+    toast(error.message);
+    return;
+  }
+
+  toast("Ticket rejected and removed.");
+  loadTickets();
+}
+document.querySelectorAll(".modal").forEach(m=>m.addEventListener("click",e=>{if(e.target===m)m.classList.remove("show")}));
+</script>
+</body>
+</html>
